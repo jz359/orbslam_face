@@ -414,6 +414,61 @@ void Tracking::Initialize()
 
 }
 
+/*
+TODO Issue #1: THIS IS MY CODE LMAO
+
+this will be called by Relocalisation()
+when it cant find any overlap between the last 
+KeyFrame and the current Frame
+*/
+void Tracking::ReInitialize()
+{
+    // Check if current frame has enough keypoints, otherwise reset initialization process
+    // not sure if this will be needed -andy
+    /*
+    if(mCurrentFrame.mvKeys.size()<=100)
+    {
+        fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
+        mState = NOT_INITIALIZED;
+        return;
+    }
+    */
+
+    // Find correspondences
+    ORBmatcher matcher(0.9,true);
+    int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+
+    // Check if there are enough correspondences
+    /* we dont care about correspondences when
+    re-initializing the whole thing -andy
+    if(nmatches<100)
+    {
+        mState = NOT_INITIALIZED;
+        return;
+    }
+    */ 
+
+    cv::Mat Rcw; // Current Camera Rotation
+    cv::Mat tcw; // Current Camera Translation
+    vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
+
+    if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
+    {
+        for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
+        {
+            if(mvIniMatches[i]>=0 && !vbTriangulated[i])
+            {
+                mvIniMatches[i]=-1;
+                nmatches--;
+            }           
+        }
+        // TODO FIX!!!!! we dont want to create a new map
+        // we just want to add to the current map
+        CreateInitialMap(Rcw,tcw);
+    }
+
+}
+
 void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
 {
     // Set Frame Poses
