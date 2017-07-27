@@ -338,6 +338,13 @@ void Tracking::FirstInitialization()
     }
 }
 
+/*
+TODO Issue #1: This and TrackPreviousFrame()
+might be relevant spots for modifying.
+It checks if a Frame has enough KeyPoints and
+correspondences between the current Frame and the
+initial Frame.
+*/
 void Tracking::Initialize()
 {
     // Check if current frame has enough keypoints, otherwise reset initialization process
@@ -482,7 +489,10 @@ void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
     mState=WORKING;
 }
 
-
+/*
+TODO Issue #1: Modify to re-initialize if
+unable to track previous frame.
+*/
 bool Tracking::TrackPreviousFrame()
 {
     ORBmatcher matcher(0.9,true);
@@ -621,7 +631,11 @@ bool Tracking::TrackLocalMap()
         return true;
 }
 
-
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 bool Tracking::NeedNewKeyFrame()
 {
     // If Local Mapping is freezed by a Loop Closure do not insert keyframes
@@ -662,6 +676,11 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 }
 
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 void Tracking::CreateNewKeyFrame()
 {
     KeyFrame* pKF = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
@@ -760,7 +779,11 @@ void Tracking::UpdateReferencePoints()
     }
 }
 
-
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 void Tracking::UpdateReferenceKeyFrames()
 {
     // Each map point vote for the keyframes in which it has been observed
@@ -838,6 +861,11 @@ void Tracking::UpdateReferenceKeyFrames()
     mpReferenceKF = pKFmax;
 }
 
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 bool Tracking::Relocalisation()
 {
     // Compute Bag of Words Vector
@@ -1009,6 +1037,11 @@ bool Tracking::Relocalisation()
 
 }
 
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 void Tracking::ForceRelocalisation()
 {
     boost::mutex::scoped_lock lock(mMutexForceRelocalisation);
@@ -1022,7 +1055,11 @@ bool Tracking::RelocalisationRequested()
     return mbForceRelocalisation;
 }
 
-
+/*
+TODO Issue #1: Might be relevant; may not need
+to modify, but will probably need to change KeyFrames
+if necessary for re-initializing the tracking.
+*/
 void Tracking::Reset()
 {
     {

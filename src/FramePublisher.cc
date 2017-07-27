@@ -140,6 +140,11 @@ cv::Mat FramePublisher::DrawFrame()
     return imWithInfo;
 }
 
+/*
+TODO Issue #2: modify this and DrawFrame() above
+to process for faces/people and draw bounding
+boxes. Probably going to need OpenCV?
+*/
 void FramePublisher::PublishFrame()
 {
     cv::Mat im = DrawFrame();
