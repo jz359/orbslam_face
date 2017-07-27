@@ -42,6 +42,28 @@ using namespace std;
 namespace ORB_SLAM
 {
 
+/*
+code logic:
+
+each KeyFrame is associated with some MapPoints
+
+KeyFrames determine how the tracking will proceed. 
+
+a new KeyFrame is created by checking value of NeedNewKeyFrame(), and then calling CreateNewKeyFrame().
+    the conditions are mostly determined by how many MapPoints
+    have been lost from the previous KeyFrame
+
+when tracking is lost, either query the KF database for 
+the best relocalization point, or forcibly relocalize to 
+the most recent KF
+    here is the problem, because tracking will be lost 
+    when the scene changes entirely; should modify the 
+    Relocalisation() method to re-initialize in a different 
+    area without MapPoints each time the scene changes and 
+    the database query fails to return suitable KFs to change 
+    back to.
+*/
+
 
 Tracking::Tracking(ORBVocabulary* pVoc, FramePublisher *pFramePublisher, MapPublisher *pMapPublisher, Map *pMap, string strSettingPath):
     mState(NO_IMAGES_YET), mpORBVocabulary(pVoc), mpFramePublisher(pFramePublisher), mpMapPublisher(pMapPublisher), mpMap(pMap),
@@ -316,7 +338,9 @@ void Tracking::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 
 }
 
-
+/*
+this wont be relevant to us
+*/
 void Tracking::FirstInitialization()
 {
     //We ensure a minimum ORB features to continue, otherwise discard frame
@@ -339,11 +363,15 @@ void Tracking::FirstInitialization()
 }
 
 /*
-TODO Issue #1: This and TrackPreviousFrame()
-might be relevant spots for modifying.
-It checks if a Frame has enough KeyPoints and
-correspondences between the current Frame and the
-initial Frame.
+TODO Issue #1: this sets everything up after 
+FirstInitialization() is called; aka this creates the 
+Map and stuff.
+
+however, we are going to have to add something that
+re-initializes everything, and preserves the KF data, 
+and MapPoint data. in all likelihood, we will need to 
+create another method that uses some of this code to
+re-initialize.
 */
 void Tracking::Initialize()
 {
@@ -490,8 +518,7 @@ void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
 }
 
 /*
-TODO Issue #1: Modify to re-initialize if
-unable to track previous frame.
+TODO Issue #1: Might be relevant; depends who calls this
 */
 bool Tracking::TrackPreviousFrame()
 {
@@ -631,11 +658,6 @@ bool Tracking::TrackLocalMap()
         return true;
 }
 
-/*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
-*/
 bool Tracking::NeedNewKeyFrame()
 {
     // If Local Mapping is freezed by a Loop Closure do not insert keyframes
@@ -677,9 +699,7 @@ bool Tracking::NeedNewKeyFrame()
 }
 
 /*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
+TODO Issue #1: Might be relevant to use
 */
 void Tracking::CreateNewKeyFrame()
 {
@@ -780,9 +800,7 @@ void Tracking::UpdateReferencePoints()
 }
 
 /*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
+TODO Issue #1: relevant method to understand
 */
 void Tracking::UpdateReferenceKeyFrames()
 {
@@ -862,9 +880,8 @@ void Tracking::UpdateReferenceKeyFrames()
 }
 
 /*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
+TODO Issue #1: Here is where the re-initialization code 
+should go!
 */
 bool Tracking::Relocalisation()
 {
@@ -1056,9 +1073,7 @@ bool Tracking::RelocalisationRequested()
 }
 
 /*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
+TODO Issue #1: Might be relevant
 */
 void Tracking::Reset()
 {
