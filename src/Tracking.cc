@@ -460,7 +460,7 @@ void Tracking::ReInitialize()
                 nmatches--;
             }           
         }
-        // TODO FIX!!!!! we dont want to create a new map
+        // we dont want to create a new map
         // we just want to add to the current map
         // CreateInitialMap(Rcw,tcw);
         AddSceneToMap(Rcw, tcw)
@@ -468,8 +468,8 @@ void Tracking::ReInitialize()
 
 }
 
-// TODO: modify code to strictly update the map, not override any
-// existing parameters
+// called during reinitialization; want to update the map with
+// a new KF and not change anything else
 void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
 {
     // Set Frame Poses
