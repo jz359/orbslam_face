@@ -424,16 +424,14 @@ KeyFrame and the current Frame
 void Tracking::ReInitialize()
 {
     // Check if current frame has enough keypoints, otherwise reset initialization process
-    // not sure if this will be needed -andy
-    /*
+    
     if(mCurrentFrame.mvKeys.size()<=100)
     {
         fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
         mState = NOT_INITIALIZED;
         return;
     }
-    */
-
+    
     // Find correspondences
     ORBmatcher matcher(0.9,true);
     int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
