@@ -531,6 +531,14 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     // Set median depth to 1
     // TODO what is this? it depends on the initial KF; do i ignore
     // everything after this?
+
+    // two possibilities: dont bother with initial KF at all or
+    // set the new initial KF, because we're effectively restarting
+    // the tracking process
+
+    // go with option 1 for now, since it's reversible
+
+    /*
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
@@ -540,6 +548,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
         Reset();
         return;
     }
+    */
 
     // Scale initial baseline
     cv::Mat Tc2w = pKFcur->GetPose();
@@ -547,6 +556,9 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     pKFcur->SetPose(Tc2w);
 
     // Scale points
+    // TODO: because we dont have an initial KF, this is not possible;
+    // will this matter? probably... need to ask mohammed
+    /*
     vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
     for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
     {
@@ -556,8 +568,9 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
             pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);
         }
     }
+    */
 
-    mpLocalMapper->InsertKeyFrame(pKFini);
+    //mpLocalMapper->InsertKeyFrame(pKFini);
     mpLocalMapper->InsertKeyFrame(pKFcur);
 
     mCurrentFrame.mTcw = pKFcur->GetPose().clone();
@@ -566,7 +579,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     mpLastKeyFrame = pKFcur;
 
     mvpLocalKeyFrames.push_back(pKFcur);
-    mvpLocalKeyFrames.push_back(pKFini);
+    //mvpLocalKeyFrames.push_back(pKFini);
     mvpLocalMapPoints=mpMap->GetAllMapPoints();
     mpReferenceKF = pKFcur;
 
