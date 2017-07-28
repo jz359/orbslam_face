@@ -1072,11 +1072,16 @@ bool Tracking::Relocalisation()
         vpCandidateKFs= mpKeyFrameDB->DetectRelocalisationCandidates(&mCurrentFrame);
     else // Forced Relocalisation: Relocate against local window around last keyframe
     {
+        /*
         boost::mutex::scoped_lock lock(mMutexForceRelocalisation);
         mbForceRelocalisation = false;
         vpCandidateKFs.reserve(10);
         vpCandidateKFs = mpLastKeyFrame->GetBestCovisibilityKeyFrames(9);
         vpCandidateKFs.push_back(mpLastKeyFrame);
+        */
+
+        // change logic to assume scene change and reinitialize
+        ReInitialize();
     }
 
     if(vpCandidateKFs.empty())
