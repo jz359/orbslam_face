@@ -464,10 +464,121 @@ void Tracking::ReInitialize()
         }
         // TODO FIX!!!!! we dont want to create a new map
         // we just want to add to the current map
-        CreateInitialMap(Rcw,tcw);
+        // CreateInitialMap(Rcw,tcw);
+        AddSceneToMap(Rcw, tcw)
     }
 
 }
+
+// TODO: modify code to strictly update the map, not override any
+// existing parameters
+void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
+{
+    // Set Frame Poses
+    mInitialFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
+    mCurrentFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
+    Rcw.copyTo(mCurrentFrame.mTcw.rowRange(0,3).colRange(0,3));
+    tcw.copyTo(mCurrentFrame.mTcw.rowRange(0,3).col(3));
+
+    // Create KeyFrames
+    // here it creates KFs for the initial frame and current frame
+    // but i think i only care about the current frame?
+    //KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
+    KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
+
+    //pKFini->ComputeBoW();
+    pKFcur->ComputeBoW();
+
+    // Insert KFs in the map
+    //mpMap->AddKeyFrame(pKFini);
+    mpMap->AddKeyFrame(pKFcur);
+
+    // Create MapPoints and asscoiate to keyframes
+    for(size_t i=0; i<mvIniMatches.size();i++)
+    {
+        if(mvIniMatches[i]<0)
+            continue;
+
+        //Create MapPoint.
+        cv::Mat worldPos(mvIniP3D[i]);
+
+        MapPoint* pMP = new MapPoint(worldPos,pKFcur,mpMap);
+
+        //pKFini->AddMapPoint(pMP,i);
+        pKFcur->AddMapPoint(pMP,mvIniMatches[i]);
+
+        //pMP->AddObservation(pKFini,i);
+        pMP->AddObservation(pKFcur,mvIniMatches[i]);
+
+        pMP->ComputeDistinctiveDescriptors();
+        pMP->UpdateNormalAndDepth();
+
+        //Fill Current Frame structure
+        mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
+
+        //Add to Map
+        mpMap->AddMapPoint(pMP);
+
+    }
+
+    // Update Connections
+    //pKFini->UpdateConnections();
+    pKFcur->UpdateConnections();
+
+    // Bundle Adjustment
+    ROS_INFO("New Map created with %d points",mpMap->MapPointsInMap());
+
+    Optimizer::GlobalBundleAdjustemnt(mpMap,20);
+
+    // Set median depth to 1
+    // TODO what is this? it depends on the initial KF; do i ignore
+    // everything after this?
+    float medianDepth = pKFini->ComputeSceneMedianDepth(2);
+    float invMedianDepth = 1.0f/medianDepth;
+
+    if(medianDepth<0 || pKFcur->TrackedMapPoints()<100)
+    {
+        ROS_INFO("Wrong initialization, reseting...");
+        Reset();
+        return;
+    }
+
+    // Scale initial baseline
+    cv::Mat Tc2w = pKFcur->GetPose();
+    Tc2w.col(3).rowRange(0,3) = Tc2w.col(3).rowRange(0,3)*invMedianDepth;
+    pKFcur->SetPose(Tc2w);
+
+    // Scale points
+    vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
+    for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
+    {
+        if(vpAllMapPoints[iMP])
+        {
+            MapPoint* pMP = vpAllMapPoints[iMP];
+            pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);
+        }
+    }
+
+    mpLocalMapper->InsertKeyFrame(pKFini);
+    mpLocalMapper->InsertKeyFrame(pKFcur);
+
+    mCurrentFrame.mTcw = pKFcur->GetPose().clone();
+    mLastFrame = Frame(mCurrentFrame);
+    mnLastKeyFrameId=mCurrentFrame.mnId;
+    mpLastKeyFrame = pKFcur;
+
+    mvpLocalKeyFrames.push_back(pKFcur);
+    mvpLocalKeyFrames.push_back(pKFini);
+    mvpLocalMapPoints=mpMap->GetAllMapPoints();
+    mpReferenceKF = pKFcur;
+
+    mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
+
+    mpMapPublisher->SetCurrentCameraPose(pKFcur->GetPose());
+
+    mState=WORKING;
+}
+
 
 void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
 {
