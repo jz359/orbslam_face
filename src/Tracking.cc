@@ -465,7 +465,6 @@ void Tracking::ReInitialize()
         // CreateInitialMap(Rcw,tcw);
         AddSceneToMap(Rcw, tcw)
     }
-
 }
 
 /*
@@ -478,7 +477,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
 
     // if we want to change the initial frame to be the current
     // frame, here is probably where we do it.
-    // mInitialFrame = mCurrentFrame.clone();
+    mInitialFrame = mCurrentFrame.clone();
 
     // Set Frame Poses
     mInitialFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
@@ -490,17 +489,17 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     // here it creates KFs for the initial frame and current frame
     // but i think i only care about the current frame?
 
-    // rather, i think we should reset the initial frame to the current
+    // rather, maybe we should set the initial frame to the current
     // frame; but unsure how to do that, and if it's a good idea
 
-    //KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
+    KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
     KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
 
-    //pKFini->ComputeBoW();
+    pKFini->ComputeBoW();
     pKFcur->ComputeBoW();
 
     // Insert KFs in the map
-    //mpMap->AddKeyFrame(pKFini);
+    mpMap->AddKeyFrame(pKFini);
     mpMap->AddKeyFrame(pKFcur);
 
     // Create MapPoints and asscoiate to keyframes
@@ -516,10 +515,10 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
 
         MapPoint* pMP = new MapPoint(worldPos,pKFcur,mpMap);
 
-        //pKFini->AddMapPoint(pMP,i);
+        pKFini->AddMapPoint(pMP,i);
         pKFcur->AddMapPoint(pMP,mvIniMatches[i]);
 
-        //pMP->AddObservation(pKFini,i);
+        pMP->AddObservation(pKFini,i);
         pMP->AddObservation(pKFcur,mvIniMatches[i]);
 
         pMP->ComputeDistinctiveDescriptors();
@@ -534,7 +533,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     }
 
     // Update Connections
-    //pKFini->UpdateConnections();
+    pKFini->UpdateConnections();
     pKFcur->UpdateConnections();
 
     // Bundle Adjustment
@@ -549,10 +548,6 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     // two possibilities: dont bother with initial KF at all or
     // set the new initial KF, because we're effectively restarting
     // the tracking process
-
-    // go with option 1 for now, since it's reversible
-
-    /*
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
@@ -562,7 +557,6 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
         Reset();
         return;
     }
-    */
 
     // Scale initial baseline
     cv::Mat Tc2w = pKFcur->GetPose();
@@ -572,7 +566,6 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     // Scale points
     // TODO: because we dont have an initial KF, this is not possible;
     // will this matter? probably... need to ask mohammed
-    /*
     vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
     for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
     {
@@ -582,9 +575,8 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
             pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);
         }
     }
-    */
 
-    //mpLocalMapper->InsertKeyFrame(pKFini);
+    mpLocalMapper->InsertKeyFrame(pKFini);
     mpLocalMapper->InsertKeyFrame(pKFcur);
 
     mCurrentFrame.mTcw = pKFcur->GetPose().clone();
@@ -593,7 +585,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     mpLastKeyFrame = pKFcur;
 
     mvpLocalKeyFrames.push_back(pKFcur);
-    //mvpLocalKeyFrames.push_back(pKFini);
+    mvpLocalKeyFrames.push_back(pKFini);
     mvpLocalMapPoints=mpMap->GetAllMapPoints();
     mpReferenceKF = pKFcur;
 
