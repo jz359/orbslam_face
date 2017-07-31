@@ -432,13 +432,13 @@ void Tracking::ReInitialize()
         return;
     }
     
+    /* we dont care about correspondences when
+    re-initializing the whole thing -andy
     // Find correspondences
     ORBmatcher matcher(0.9,true);
     int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
     // Check if there are enough correspondences
-    /* we dont care about correspondences when
-    re-initializing the whole thing -andy
     if(nmatches<100)
     {
         mState = NOT_INITIALIZED;
@@ -468,6 +468,9 @@ void Tracking::ReInitialize()
 
 }
 
+/*
+TODO Issue #1: this is still my code lmfao
+*/
 // called during reinitialization; want to update the map with
 // a new KF and not change anything else
 void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
@@ -481,6 +484,10 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     // Create KeyFrames
     // here it creates KFs for the initial frame and current frame
     // but i think i only care about the current frame?
+
+    // rather, i think we should reset the initial frame to the current
+    // frame; but unsure how to do that, and if it's a good idea
+    
     //KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
     KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
 
@@ -492,6 +499,8 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     mpMap->AddKeyFrame(pKFcur);
 
     // Create MapPoints and asscoiate to keyframes
+    // TODO mvIniMatches looks like a class field that is 
+    // related to the initial frame. may need to change this
     for(size_t i=0; i<mvIniMatches.size();i++)
     {
         if(mvIniMatches[i]<0)

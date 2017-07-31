@@ -158,12 +158,16 @@ int main(int argc, char **argv)
         {
             // reinitialize every 30 frames
             Tracker.ReInitialize();
+
+            //cant call Initialize() because
+            //that would wipe the whole map
         }
         */
-        
+
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();
+        reinit_counter++;
         r.sleep();
     }
 
