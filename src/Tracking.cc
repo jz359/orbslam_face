@@ -564,8 +564,8 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
     pKFcur->SetPose(Tc2w);
 
     // Scale points
-    // TODO: because we dont have an initial KF, this is not possible;
-    // will this matter? probably... need to ask mohammed
+    // TODO: this stuff depends on the initial frame; not sure if it
+    // will be necessary to include but for now it's here
     vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
     for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
     {
