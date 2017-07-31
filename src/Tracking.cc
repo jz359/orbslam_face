@@ -475,6 +475,11 @@ TODO Issue #1: this is still my code lmfao
 // a new KF and not change anything else
 void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
 {
+
+    // if we want to change the initial frame to be the current
+    // frame, here is probably where we do it.
+    // mInitialFrame = mCurrentFrame.clone();
+
     // Set Frame Poses
     mInitialFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
     mCurrentFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
@@ -487,7 +492,7 @@ void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
 
     // rather, i think we should reset the initial frame to the current
     // frame; but unsure how to do that, and if it's a good idea
-    
+
     //KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
     KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
 
