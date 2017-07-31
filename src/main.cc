@@ -153,7 +153,6 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-        /*
         if (reinit_counter%30 == 0)
         {
             // reinitialize every 30 frames
@@ -162,7 +161,6 @@ int main(int argc, char **argv)
             //cant call Initialize() because
             //that would wipe the whole map
         }
-        */
 
         FramePub.Refresh();
         MapPub.Refresh();
