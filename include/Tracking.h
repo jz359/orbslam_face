@@ -88,13 +88,14 @@ public:
 
     void CheckResetByPublishers();
 
+    void ReInitialize();
+
 
 protected:
     void GrabImage(const sensor_msgs::ImageConstPtr& msg);
 
     void FirstInitialization();
     void Initialize();
-    void ReInitialize();
     void AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw);
     void CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw);
 
