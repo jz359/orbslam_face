@@ -89,7 +89,6 @@ public:
     void CheckResetByPublishers();
     void ReInitializeTracking();
 
-
     void GrabImage(const sensor_msgs::ImageConstPtr& msg);
 
     void FirstInitialization();

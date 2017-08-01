@@ -461,6 +461,7 @@ void Tracking::ReInitialize()
             if(mvIniMatches[i]>=0 && !vbTriangulated[i])
             {
                 mvIniMatches[i]=-1;
+                nmatches--;
             }           
         }
         // we dont want to create a new map
