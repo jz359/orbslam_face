@@ -176,6 +176,9 @@ void MapPublisher::PublishMapPoints(const vector<MapPoint*> &vpMPs, const vector
     publisher.publish(mReferencePoints);
 }
 
+/*
+TODO Issue #2: will need to get bounding boxes here?
+*/
 void MapPublisher::PublishKeyFrames(const vector<KeyFrame*> &vpKFs)
 {
     mKeyFrames.points.clear();
@@ -191,6 +194,7 @@ void MapPublisher::PublishKeyFrames(const vector<KeyFrame*> &vpKFs)
     cv::Mat p3 = (cv::Mat_<float>(4,1) << -d, -d*0.8, d*0.5, 1);
     cv::Mat p4 = (cv::Mat_<float>(4,1) << -d, d*0.8, d*0.5, 1);
 
+    // for each keyframe, do some calculations
     for(size_t i=0, iend=vpKFs.size() ;i<iend; i++)
     {
         cv::Mat Tcw = vpKFs[i]->GetPose();

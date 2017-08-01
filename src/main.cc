@@ -153,9 +153,9 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-        if (reinit_counter%30 == 0)
+        if (reinit_counter%10 == 0)
         {
-            // reinitialize every 30 frames
+            // reinitialize every 10 frames
             Tracker.ReInitialize();
 
             //cant call Initialize() because
