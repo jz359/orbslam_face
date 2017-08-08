@@ -149,19 +149,8 @@ int main(int argc, char **argv)
 
     ros::Rate r(fps);
 
-    int reinit_counter = 0;
-
     while (ros::ok())
     {
-        if (reinit_counter%10 == 0)
-        {
-            // reinitialize every 10 frames
-            Tracker.ReInitializeTracking();
-
-            //cant call Initialize() because
-            //that would wipe the whole map
-        }
-
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();

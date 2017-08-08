@@ -195,6 +195,8 @@ void MapPublisher::PublishKeyFrames(const vector<KeyFrame*> &vpKFs)
     cv::Mat p4 = (cv::Mat_<float>(4,1) << -d, d*0.8, d*0.5, 1);
 
     // for each keyframe, do some calculations
+    // and add to mKeyFrames for publishing
+    // TODO: where do i modify them to display the boxes?
     for(size_t i=0, iend=vpKFs.size() ;i<iend; i++)
     {
         cv::Mat Tcw = vpKFs[i]->GetPose();

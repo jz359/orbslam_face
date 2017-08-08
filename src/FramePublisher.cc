@@ -49,6 +49,11 @@ void FramePublisher::SetMap(Map *pMap)
 
 void FramePublisher::Refresh()
 {
+    // TODO set up so that everytime Refresh() is called
+    // we read in the bounding box info for the next frame
+    // from the JSON file
+
+    // not sure how this is going to work though...
     if(mbUpdated)
     {
         PublishFrame();
@@ -105,6 +110,8 @@ cv::Mat FramePublisher::DrawFrame()
         {
             if(vMatches[i]>=0)
             {
+                // this is where the "movement" lines shown constantly
+                // not the tracked points; i.e. this is not the tracking part
                 cv::line(im,vIniKeys[i].pt,vCurrentKeys[vMatches[i]].pt,
                         cv::Scalar(0,255,0));
             }
@@ -123,15 +130,26 @@ cv::Mat FramePublisher::DrawFrame()
                 pt1.y=vCurrentKeys[i].pt.y-r;
                 pt2.x=vCurrentKeys[i].pt.x+r;
                 pt2.y=vCurrentKeys[i].pt.y+r;
+
+                cv::Point2f pt3,pt4;
+                pt3.x=0;
+                pt4.x=0;
+                pt3.y=10;
+                pt4.y=10;
+
                 if(!mvbOutliers[i])
                 {
+                    // this is where they draw the tracked points
                     cv::rectangle(im,pt1,pt2,cv::Scalar(0,255,0));
+
+                    // testing to see if this works
+                    cv::rectangle(im,pt3,pt4,cv::Scalar(100,25,255));
+
                     cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1);
                     mnTracked++;
                 }
             }
         }
-
     }
 
     cv::Mat imWithInfo;
