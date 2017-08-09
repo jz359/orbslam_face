@@ -27,6 +27,7 @@
 #include<boost/thread.hpp>
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <json/json.h>
 
 namespace ORB_SLAM
 {
@@ -36,6 +37,19 @@ FramePublisher::FramePublisher()
     mState=Tracking::SYSTEM_NOT_READY;
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     mbUpdated = true;
+
+    frameNum = 0;
+
+    std::ifstream file("../boxes.json", std::ifstream::binary);
+    file >> boundingBoxes;
+
+    cout << boundingBoxes;
+
+    // boundingBoxes["video"]["frames"] should be a list of some sort
+    // access the frameNum-th element of that list to get a dictionary
+    // possibly containing a "faces" dict
+    // and then iterate through that dict to get coordinates for each entry
+    // and draw the boxes onto the frame
 
     mImagePub = mNH.advertise<sensor_msgs::Image>("ORB_SLAM/Frame",10,true);
 
@@ -114,14 +128,16 @@ cv::Mat FramePublisher::DrawFrame()
     {
         mnTracked=0;
         const float r = 5;
+	//////////////////
+	//Added a black box in the 2D frame display (Placeholder for bounding boxes)
 	cv::Point2f pt3,pt4;
-
 	pt3.x=0;
 	pt3.y=0;
 	pt4.x=50;
 	pt4.y=50;
 	cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
-        for(unsigned int i=0;i<vMatchedMapPoints.size();i++)
+	//////////////////        
+	for(unsigned int i=0;i<vMatchedMapPoints.size();i++)
         {
             if(vMatchedMapPoints[i] || mvbOutliers[i])
             {
@@ -134,7 +150,6 @@ cv::Mat FramePublisher::DrawFrame()
                 if(!mvbOutliers[i])
                 {
                     cv::rectangle(im,pt1,pt2,cv::Scalar(0,255,0));
-                    cv::rectangle(im,pt1,pt2,cv::Scalar(20,100,255));
                     cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1);
                     mnTracked++;
                 }

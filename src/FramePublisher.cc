@@ -39,9 +39,6 @@ FramePublisher::FramePublisher()
 
     frameNum = 0;
 
-    std::ifstream file("../boxes.json");
-    file >> boundingBoxes;
-
     // boundingBoxes["video"]["frames"] should be a list of some sort
     // access the frameNum-th element of that list to get a dictionary
     // possibly containing a "faces" dict
