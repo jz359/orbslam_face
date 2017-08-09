@@ -139,6 +139,18 @@ cv::Mat FramePublisher::DrawFrame()
 	pt4.x=50;
 	pt4.y=50;
 	cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
+
+    // DRAWING BOUNDING BOXES
+    // get the appropriate dictionary
+    frameInfo = boundingBoxes["video"]["frames"][frameNum];
+
+    //TODO check if contains a "faces" key; if so, iterate through
+    // the value of "faces" and draw boxes
+    cout << frameInfo
+
+    // increment frameNum
+    frameNum++;
+
 	//////////////////        
 	for(unsigned int i=0;i<vMatchedMapPoints.size();i++)
         {
