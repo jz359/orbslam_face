@@ -37,6 +37,17 @@ FramePublisher::FramePublisher()
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     mbUpdated = true;
 
+    frameNum = 0;
+
+    std::ifstream file("../boxes.json");
+    file >> boundingBoxes;
+
+    // boundingBoxes["video"]["frames"] should be a list of some sort
+    // access the frameNum-th element of that list to get a dictionary
+    // possibly containing a "faces" dict
+    // and then iterate through that dict to get coordinates for each entry
+    // and draw the boxes onto the frame
+
     mImagePub = mNH.advertise<sensor_msgs::Image>("ORB_SLAM/Frame",10,true);
 
     PublishFrame();

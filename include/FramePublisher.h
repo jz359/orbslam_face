@@ -26,6 +26,9 @@
 #include "Map.h"
 
 #include "ros/ros.h"
+#include <json/json.h>
+#include <json/value.h>
+#include <fstream>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
@@ -48,6 +51,10 @@ public:
     void Refresh();
 
     void SetMap(Map* pMap);
+
+    int frameNum;
+
+    Json::Value boundingBoxes;
 
 protected:
 
