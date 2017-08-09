@@ -56,7 +56,6 @@ private:
     visualization_msgs::Marker mPoints;
     visualization_msgs::Marker mReferencePoints;
     visualization_msgs::Marker mKeyFrames;
-    visualization_msgs::Marker mBoundingBoxes;
     visualization_msgs::Marker mReferenceKeyFrames;
     visualization_msgs::Marker mCovisibilityGraph;
     visualization_msgs::Marker mMST;
