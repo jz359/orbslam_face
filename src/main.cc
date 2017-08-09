@@ -149,12 +149,14 @@ int main(int argc, char **argv)
 
     ros::Rate r(fps);
 
+    int refcount = 0;
+
     while (ros::ok())
     {
         FramePub.Refresh();
         MapPub.Refresh();
         Tracker.CheckResetByPublishers();
-        reinit_counter++;
+	refcount++;
         r.sleep();
     }
 

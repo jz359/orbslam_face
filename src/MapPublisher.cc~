@@ -157,7 +157,7 @@ void MapPublisher::PublishMapPoints(const vector<MapPoint*> &vpMPs, const vector
     mReferencePoints.points.clear();
 
 	////////////
-	//mBoundingBoxes.points.clear();
+	mBoundingBoxes.points.clear();
 	//////////
 
     set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
@@ -173,7 +173,6 @@ void MapPublisher::PublishMapPoints(const vector<MapPoint*> &vpMPs, const vector
         p.y=pos.at<float>(1);
         p.z=pos.at<float>(2);
 
-/*
 		if(count==0)
 		{
 			geometry_msgs::Point b1,b2,b3,b4;
@@ -203,7 +202,6 @@ void MapPublisher::PublishMapPoints(const vector<MapPoint*> &vpMPs, const vector
 			mBoundingBoxes.points.push_back(b1);
 			count++;
 		}
-*/
 
         mPoints.points.push_back(p);
     }

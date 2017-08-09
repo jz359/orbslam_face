@@ -42,28 +42,6 @@ using namespace std;
 namespace ORB_SLAM
 {
 
-/*
-code logic:
-
-each KeyFrame is associated with some MapPoints
-
-KeyFrames determine how the tracking will proceed. 
-
-a new KeyFrame is created by checking value of NeedNewKeyFrame(), and then calling CreateNewKeyFrame().
-    the conditions are mostly determined by how many MapPoints
-    have been lost from the previous KeyFrame
-
-when tracking is lost, either query the KF database for 
-the best relocalization point, or forcibly relocalize to 
-the most recent KF
-    here is the problem, because tracking will be lost 
-    when the scene changes entirely; should modify the 
-    Relocalisation() method to re-initialize in a different 
-    area without MapPoints each time the scene changes and 
-    the database query fails to return suitable KFs to change 
-    back to.
-*/
-
 
 Tracking::Tracking(ORBVocabulary* pVoc, FramePublisher *pFramePublisher, MapPublisher *pMapPublisher, Map *pMap, string strSettingPath):
     mState(NO_IMAGES_YET), mpORBVocabulary(pVoc), mpFramePublisher(pFramePublisher), mpMapPublisher(pMapPublisher), mpMap(pMap),
@@ -338,9 +316,7 @@ void Tracking::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 
 }
 
-/*
-this wont be relevant to us
-*/
+
 void Tracking::FirstInitialization()
 {
     //We ensure a minimum ORB features to continue, otherwise discard frame
@@ -357,21 +333,11 @@ void Tracking::FirstInitialization()
 
         mpInitializer =  new Initializer(mCurrentFrame,1.0,200);
 
+
         mState = INITIALIZING;
     }
 }
 
-/*
-TODO Issue #1: this sets everything up after 
-FirstInitialization() is called; aka this creates the 
-Map and stuff.
-
-however, we are going to have to add something that
-re-initializes everything, and preserves the KF data, 
-and MapPoint data. in all likelihood, we will need to 
-create another method that uses some of this code to
-re-initialize.
-*/
 void Tracking::Initialize()
 {
     // Check if current frame has enough keypoints, otherwise reset initialization process
@@ -412,193 +378,6 @@ void Tracking::Initialize()
     }
 
 }
-
-void Tracking::ReInitializeTracking()
-{
-    ReInitialize();
-}
-
-/*
-TODO Issue #1: THIS IS MY CODE LMAO
-
-this will be called by Relocalisation()
-when it cant find any overlap between the last 
-KeyFrame and the current Frame
-*/
-void Tracking::ReInitialize()
-{
-    // Check if current frame has enough keypoints, otherwise reset initialization process
-    
-    if(mCurrentFrame.mvKeys.size()<=100)
-    {
-        fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
-        mState = NOT_INITIALIZED;
-        return;
-    }
-    
-    /* we dont care about correspondences when
-    re-initializing the whole thing -andy
-    // Find correspondences
-    ORBmatcher matcher(0.9,true);
-    int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
-
-    // Check if there are enough correspondences
-    if(nmatches<100)
-    {
-        mState = NOT_INITIALIZED;
-        return;
-    }
-    */ 
-
-    cv::Mat Rcw; // Current Camera Rotation
-    cv::Mat tcw; // Current Camera Translation
-    vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
-
-    if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
-    {
-        for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
-        {
-            if(mvIniMatches[i]>=0 && !vbTriangulated[i])
-            {
-                mvIniMatches[i]=-1;
-            }           
-        }
-        // we dont want to create a new map
-        // we just want to add to the current map
-        // CreateInitialMap(Rcw,tcw);
-        AddSceneToMap(Rcw, tcw);
-    }
-}
-
-/*
-TODO Issue #1: this is still my code lmfao
-*/
-// called during reinitialization; want to update the map with
-// a new KF and not change anything else
-void Tracking::AddSceneToMap(cv::Mat &Rcw, cv::Mat &tcw)
-{
-
-    // if we want to change the initial frame to be the current
-    // frame, here is probably where we do it.
-    mInitialFrame = mCurrentFrame;
-
-    // Set Frame Poses
-    mInitialFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
-    mCurrentFrame.mTcw = cv::Mat::eye(4,4,CV_32F);
-    Rcw.copyTo(mCurrentFrame.mTcw.rowRange(0,3).colRange(0,3));
-    tcw.copyTo(mCurrentFrame.mTcw.rowRange(0,3).col(3));
-
-    // Create KeyFrames
-    // here it creates KFs for the initial frame and current frame
-    // but i think i only care about the current frame?
-
-    // rather, maybe we should set the initial frame to the current
-    // frame; but unsure how to do that, and if it's a good idea
-
-    KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
-    KeyFrame* pKFcur = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
-
-    pKFini->ComputeBoW();
-    pKFcur->ComputeBoW();
-
-    // Insert KFs in the map
-    mpMap->AddKeyFrame(pKFini);
-    mpMap->AddKeyFrame(pKFcur);
-
-    // Create MapPoints and asscoiate to keyframes
-    // TODO mvIniMatches looks like a class field that is 
-    // related to the initial frame. may need to change this
-    for(size_t i=0; i<mvIniMatches.size();i++)
-    {
-        if(mvIniMatches[i]<0)
-            continue;
-
-        //Create MapPoint.
-        cv::Mat worldPos(mvIniP3D[i]);
-
-        MapPoint* pMP = new MapPoint(worldPos,pKFcur,mpMap);
-
-        pKFini->AddMapPoint(pMP,i);
-        pKFcur->AddMapPoint(pMP,mvIniMatches[i]);
-
-        pMP->AddObservation(pKFini,i);
-        pMP->AddObservation(pKFcur,mvIniMatches[i]);
-
-        pMP->ComputeDistinctiveDescriptors();
-        pMP->UpdateNormalAndDepth();
-
-        //Fill Current Frame structure
-        mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
-
-        //Add to Map
-        mpMap->AddMapPoint(pMP);
-
-    }
-
-    // Update Connections
-    pKFini->UpdateConnections();
-    pKFcur->UpdateConnections();
-
-    // Bundle Adjustment
-    ROS_INFO("New Map created with %d points",mpMap->MapPointsInMap());
-
-    Optimizer::GlobalBundleAdjustemnt(mpMap,20);
-
-    // Set median depth to 1
-    // TODO what is this? it depends on the initial KF; do i ignore
-    // everything after this?
-
-    // two possibilities: dont bother with initial KF at all or
-    // set the new initial KF, because we're effectively restarting
-    // the tracking process
-    float medianDepth = pKFini->ComputeSceneMedianDepth(2);
-    float invMedianDepth = 1.0f/medianDepth;
-
-    if(medianDepth<0 || pKFcur->TrackedMapPoints()<100)
-    {
-        ROS_INFO("Wrong initialization, reseting...");
-        Reset();
-        return;
-    }
-
-    // Scale initial baseline
-    cv::Mat Tc2w = pKFcur->GetPose();
-    Tc2w.col(3).rowRange(0,3) = Tc2w.col(3).rowRange(0,3)*invMedianDepth;
-    pKFcur->SetPose(Tc2w);
-
-    // Scale points
-    // TODO: this stuff depends on the initial frame; not sure if it
-    // will be necessary to include but for now it's here
-    vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
-    for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
-    {
-        if(vpAllMapPoints[iMP])
-        {
-            MapPoint* pMP = vpAllMapPoints[iMP];
-            pMP->SetWorldPos(pMP->GetWorldPos()*invMedianDepth);
-        }
-    }
-
-    mpLocalMapper->InsertKeyFrame(pKFini);
-    mpLocalMapper->InsertKeyFrame(pKFcur);
-
-    mCurrentFrame.mTcw = pKFcur->GetPose().clone();
-    mLastFrame = Frame(mCurrentFrame);
-    mnLastKeyFrameId=mCurrentFrame.mnId;
-    mpLastKeyFrame = pKFcur;
-
-    mvpLocalKeyFrames.push_back(pKFcur);
-    mvpLocalKeyFrames.push_back(pKFini);
-    mvpLocalMapPoints=mpMap->GetAllMapPoints();
-    mpReferenceKF = pKFcur;
-
-    mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
-
-    mpMapPublisher->SetCurrentCameraPose(pKFcur->GetPose());
-
-    mState=WORKING;
-}
-
 
 void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
 {
@@ -703,9 +482,7 @@ void Tracking::CreateInitialMap(cv::Mat &Rcw, cv::Mat &tcw)
     mState=WORKING;
 }
 
-/*
-TODO Issue #1: Might be relevant; depends who calls this
-*/
+
 bool Tracking::TrackPreviousFrame()
 {
     ORBmatcher matcher(0.9,true);
@@ -844,6 +621,7 @@ bool Tracking::TrackLocalMap()
         return true;
 }
 
+
 bool Tracking::NeedNewKeyFrame()
 {
     // If Local Mapping is freezed by a Loop Closure do not insert keyframes
@@ -884,9 +662,6 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 }
 
-/*
-TODO Issue #1: Might be relevant to use
-*/
 void Tracking::CreateNewKeyFrame()
 {
     KeyFrame* pKF = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
@@ -985,9 +760,7 @@ void Tracking::UpdateReferencePoints()
     }
 }
 
-/*
-TODO Issue #1: relevant method to understand
-*/
+
 void Tracking::UpdateReferenceKeyFrames()
 {
     // Each map point vote for the keyframes in which it has been observed
@@ -1065,10 +838,6 @@ void Tracking::UpdateReferenceKeyFrames()
     mpReferenceKF = pKFmax;
 }
 
-/*
-TODO Issue #1: Here is where the re-initialization code 
-should go!
-*/
 bool Tracking::Relocalisation()
 {
     // Compute Bag of Words Vector
@@ -1081,16 +850,11 @@ bool Tracking::Relocalisation()
         vpCandidateKFs= mpKeyFrameDB->DetectRelocalisationCandidates(&mCurrentFrame);
     else // Forced Relocalisation: Relocate against local window around last keyframe
     {
-        /*
         boost::mutex::scoped_lock lock(mMutexForceRelocalisation);
         mbForceRelocalisation = false;
         vpCandidateKFs.reserve(10);
         vpCandidateKFs = mpLastKeyFrame->GetBestCovisibilityKeyFrames(9);
         vpCandidateKFs.push_back(mpLastKeyFrame);
-        */
-
-        // change logic to assume scene change and reinitialize
-        ReInitialize();
     }
 
     if(vpCandidateKFs.empty())
@@ -1245,11 +1009,6 @@ bool Tracking::Relocalisation()
 
 }
 
-/*
-TODO Issue #1: Might be relevant; may not need
-to modify, but will probably need to change KeyFrames
-if necessary for re-initializing the tracking.
-*/
 void Tracking::ForceRelocalisation()
 {
     boost::mutex::scoped_lock lock(mMutexForceRelocalisation);
@@ -1263,9 +1022,7 @@ bool Tracking::RelocalisationRequested()
     return mbForceRelocalisation;
 }
 
-/*
-TODO Issue #1: Might be relevant
-*/
+
 void Tracking::Reset()
 {
     {

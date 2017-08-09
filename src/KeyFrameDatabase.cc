@@ -195,7 +195,6 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     return vpLoopCandidates;
 }
 
-// TODO Issue #1: may need to use this 
 vector<KeyFrame*> KeyFrameDatabase::DetectRelocalisationCandidates(Frame *F)
 {
     list<KeyFrame*> lKFsSharingWords;
