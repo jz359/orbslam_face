@@ -27,6 +27,7 @@
 #include<boost/thread.hpp>
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <typeinfo>
 
 namespace ORB_SLAM
 {
@@ -163,11 +164,33 @@ cv::Mat FramePublisher::DrawFrame()
 
     // DRAWING BOUNDING BOXES
     // get the appropriate dictionary
-    frameInfo = boundingBoxes["video"]["frames"][frameNum];
+    //frameInfo = boundingBoxes["video"]["frames"][frameNum];
+    //cout << typeid(boundingBoxes["video"]["frames"]).name();
+    assert(boundingBoxes.HasMember("video"));
+    assert(boundingBoxes["video"].HasMember("frames"));
 
     //TODO check if contains a "faces" key; if so, iterate through
     // the value of "faces" and draw boxes
-    cout << frameInfo;
+    //cout << frameInfo;
+    if (boundingBoxes["video"]["frames"][frameNum].HasMember("faces"))
+    {
+	cout << "this frame has at least one face!" << endl;
+	// now we need to process every dictionary in the list referred to by "faces"
+	// not sure how to do this...
+	/* this code is correct logic, but wrong/cant compile; dont know enough about the language
+	int length = boundingBoxes["video"]["frames"][frameNum]["faces"].size();
+	for (unsigned i = 0; i < length; i++)
+	{
+	    Document temp = boundingBoxes["video"]["frames"][frameNum]["faces"][i];
+	    cout << "made it here" << endl;
+	    const rapidjson::Value& V;
+	    for(Value::ConstMemberIterator iter = V.MemberBegin(); iter != V.MemberEnd(); ++iter)
+	    {
+		int topleft [] = (iter->value)[0];
+		int bottomright [] = (iter->value)[1];
+	    }
+	} */
+    }
 
     // increment frameNum
     frameNum++;

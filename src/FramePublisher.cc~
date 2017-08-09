@@ -27,7 +27,7 @@
 #include<boost/thread.hpp>
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-#include <json/json.h>
+#include <typeinfo>
 
 namespace ORB_SLAM
 {
@@ -40,16 +40,20 @@ FramePublisher::FramePublisher()
 
     frameNum = 0;
 
-    std::ifstream file("../boxes.json", std::ifstream::binary);
-    file >> boundingBoxes;
-
-    cout << boundingBoxes;
-
     // boundingBoxes["video"]["frames"] should be a list of some sort
     // access the frameNum-th element of that list to get a dictionary
     // possibly containing a "faces" dict
     // and then iterate through that dict to get coordinates for each entry
     // and draw the boxes onto the frame
+    ifstream infile("boxes.json");
+    
+    //extract contents of file
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    string str = buffer.str();
+    const char* json = str.c_str();
+
+    boundingBoxes.Parse(json);
 
     mImagePub = mNH.advertise<sensor_msgs::Image>("ORB_SLAM/Frame",10,true);
 
@@ -127,16 +131,7 @@ cv::Mat FramePublisher::DrawFrame()
     else if(state==Tracking::WORKING) //TRACKING
     {
         mnTracked=0;
-        const float r = 5;
-	//////////////////
-	//Added a black box in the 2D frame display (Placeholder for bounding boxes)
-	cv::Point2f pt3,pt4;
-	pt3.x=0;
-	pt3.y=0;
-	pt4.x=50;
-	pt4.y=50;
-	cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
-	//////////////////        
+        const float r = 5;      
 	for(unsigned int i=0;i<vMatchedMapPoints.size();i++)
         {
             if(vMatchedMapPoints[i] || mvbOutliers[i])
@@ -157,6 +152,49 @@ cv::Mat FramePublisher::DrawFrame()
         }
 
     }
+
+    //////////////////
+    //Added a black box in the 2D frame display (Placeholder for bounding boxes)
+    cv::Point2f pt3,pt4;
+    pt3.x=0;
+    pt3.y=0;
+    pt4.x=50;
+    pt4.y=50;
+    cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
+
+    // DRAWING BOUNDING BOXES
+    // get the appropriate dictionary
+    //frameInfo = boundingBoxes["video"]["frames"][frameNum];
+    //cout << typeid(boundingBoxes["video"]["frames"]).name();
+    assert(boundingBoxes.HasMember("video"));
+    assert(boundingBoxes["video"].HasMember("frames"));
+
+    //TODO check if contains a "faces" key; if so, iterate through
+    // the value of "faces" and draw boxes
+    //cout << frameInfo;
+    if (boundingBoxes["video"]["frames"][frameNum].HasMember("faces"))
+    {
+	// now we need to process every dictionary in the list referred to by "faces"
+	// not sure how to do this...
+	/* this code is correct logic, but wrong/cant compile; dont know enough about the language
+	int length = boundingBoxes["video"]["frames"][frameNum]["faces"].size();
+	for (unsigned i = 0; i < length; i++)
+	{
+	    Document temp = boundingBoxes["video"]["frames"][frameNum]["faces"][i];
+	    cout << "made it here" << endl;
+	    const rapidjson::Value& V;
+	    for(Value::ConstMemberIterator iter = V.MemberBegin(); iter != V.MemberEnd(); ++iter)
+	    {
+		int topleft [] = (iter->value)[0];
+		int bottomright [] = (iter->value)[1];
+	    }
+	} */
+    }
+
+    // increment frameNum
+    frameNum++;
+
+    //////////////////
 
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
