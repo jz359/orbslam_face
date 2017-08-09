@@ -27,13 +27,16 @@
 
 #include "ros/ros.h"
 #include <fstream>
-//#include <json/json.h>
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/document.h"
+#include <cstdio>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
 #include<boost/thread.hpp>
 
+using namespace rapidjson;
 
 namespace ORB_SLAM
 {
@@ -53,7 +56,7 @@ public:
 
     int frameNum;
 
-    //Json::Value boundingBoxes;
+    Document boundingBoxes;
 
 protected:
 
