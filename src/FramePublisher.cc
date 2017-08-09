@@ -130,28 +130,7 @@ cv::Mat FramePublisher::DrawFrame()
     else if(state==Tracking::WORKING) //TRACKING
     {
         mnTracked=0;
-        const float r = 5;
-	//////////////////
-	//Added a black box in the 2D frame display (Placeholder for bounding boxes)
-	cv::Point2f pt3,pt4;
-	pt3.x=0;
-	pt3.y=0;
-	pt4.x=50;
-	pt4.y=50;
-	cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
-
-    // DRAWING BOUNDING BOXES
-    // get the appropriate dictionary
-    frameInfo = boundingBoxes["video"]["frames"][frameNum];
-
-    //TODO check if contains a "faces" key; if so, iterate through
-    // the value of "faces" and draw boxes
-    cout << frameInfo
-
-    // increment frameNum
-    frameNum++;
-
-	//////////////////        
+        const float r = 5;      
 	for(unsigned int i=0;i<vMatchedMapPoints.size();i++)
         {
             if(vMatchedMapPoints[i] || mvbOutliers[i])
@@ -172,6 +151,28 @@ cv::Mat FramePublisher::DrawFrame()
         }
 
     }
+
+    //////////////////
+    //Added a black box in the 2D frame display (Placeholder for bounding boxes)
+    cv::Point2f pt3,pt4;
+    pt3.x=0;
+    pt3.y=0;
+    pt4.x=50;
+    pt4.y=50;
+    cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
+
+    // DRAWING BOUNDING BOXES
+    // get the appropriate dictionary
+    frameInfo = boundingBoxes["video"]["frames"][frameNum];
+
+    //TODO check if contains a "faces" key; if so, iterate through
+    // the value of "faces" and draw boxes
+    cout << frameInfo;
+
+    // increment frameNum
+    frameNum++;
+
+    //////////////////
 
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
