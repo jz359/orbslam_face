@@ -27,9 +27,17 @@
 
 #include "ros/ros.h"
 #include <fstream>
+
+//JSON stuff
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/document.h"
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
 #include <cstdio>
+// not sure if this stuff is needed/ok
+#include <string>
+#include <iostream>
+#include <algorithm>
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>

@@ -44,6 +44,15 @@ FramePublisher::FramePublisher()
     // possibly containing a "faces" dict
     // and then iterate through that dict to get coordinates for each entry
     // and draw the boxes onto the frame
+    ifstream infile("boxes.json");
+    
+    //extract contents of file
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    string str = buffer.str();
+    const char* json = str.c_str();
+
+    boundingBoxes.Parse(json);
 
     mImagePub = mNH.advertise<sensor_msgs::Image>("ORB_SLAM/Frame",10,true);
 
