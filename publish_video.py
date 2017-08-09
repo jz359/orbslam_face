@@ -38,7 +38,9 @@ def main():
                         help="Camera calibration url.")
 
     args = parser.parse_args()
+    publish(args)
 
+def publish(args):
     print "Publishing %s." % (args.video_file)
 
     # Set up node.
