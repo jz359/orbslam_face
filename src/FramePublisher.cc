@@ -38,6 +38,8 @@ FramePublisher::FramePublisher()
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     mbUpdated = true;
 
+/////////////////// JSON STUFF; commented out because ORBSLAM cant even startup with this for some reason
+/*
     frameNum = 0;
 
     // boundingBoxes["video"]["frames"] should be a list of some sort
@@ -54,6 +56,8 @@ FramePublisher::FramePublisher()
     const char* json = str.c_str();
 
     boundingBoxes.Parse(json);
+*/
+//////////////////////
 
     mImagePub = mNH.advertise<sensor_msgs::Image>("ORB_SLAM/Frame",10,true);
 
@@ -153,14 +157,15 @@ cv::Mat FramePublisher::DrawFrame()
 
     }
 
+/* json processing code; again, omitted because for some reason, ORBSLAM is unable to startup
     //////////////////
-    //Added a black box in the 2D frame display (Placeholder for bounding boxes)
+    //Added a white box in the 2D frame display (Placeholder for bounding boxes)
     cv::Point2f pt3,pt4;
     pt3.x=0;
     pt3.y=0;
     pt4.x=50;
     pt4.y=50;
-    cv::rectangle(im,pt3,pt4,cv::Scalar(0,0,0));
+    cv::rectangle(im,pt3,pt4,cv::Scalar(255,255,255));
 
     // DRAWING BOUNDING BOXES
     // get the appropriate dictionary
@@ -172,31 +177,28 @@ cv::Mat FramePublisher::DrawFrame()
     //TODO check if contains a "faces" key; if so, iterate through
     // the value of "faces" and draw boxes
     //cout << frameInfo;
+    cout << "verifying that we are at the if statement" << endl;
     if (boundingBoxes["video"]["frames"][frameNum].HasMember("faces"))
     {
 	cout << "this frame has at least one face!" << endl;
-	// now we need to process every dictionary in the list referred to by "faces"
-	// not sure how to do this...
-	/* this code is correct logic, but wrong/cant compile; dont know enough about the language
-	int length = boundingBoxes["video"]["frames"][frameNum]["faces"].size();
-	for (unsigned i = 0; i < length; i++)
+	const rapidjson::Value& faces = boundingBoxes["video"]["frames"][frameNum]["faces"];
+	for (SizeType i = 0; i < faces.Size(); i++)
 	{
-	    Document temp = boundingBoxes["video"]["frames"][frameNum]["faces"][i];
-	    cout << "made it here" << endl;
-	    const rapidjson::Value& V;
-	    for(Value::ConstMemberIterator iter = V.MemberBegin(); iter != V.MemberEnd(); ++iter)
+	    assert(faces[i].IsObject());
+	    static const char* kTypeNames[] = {"Null", "False", "True", "Object", "Array", "String", "Number"};
+	    for (Value::ConstMemberIterator itr = faces[i].MemberBegin(); itr != faces[i].MemberEnd(); ++itr)
 	    {
-		int topleft [] = (iter->value)[0];
-		int bottomright [] = (iter->value)[1];
-	    }
-	} */
+		//char id_str[] = itr->name.GetString();
+		const rapidjson::Value& attributes = itr->value;
+    	    }
+	    //faces[i] should be a new Document that contains one key-val pair, i.e. idnum-info
+	}
     }
 
     // increment frameNum
     frameNum++;
-
     //////////////////
-
+*/
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
 
